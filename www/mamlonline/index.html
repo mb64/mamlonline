@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <title>MAML Online</title>
+    <link rel="stylesheet" href="normalize.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="jquery.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="mathquill-0.10.1/mathquill.css">
+    <script src="mathquill-0.10.1/mathquill.js"></script>
+
+    <script>
+    var MQ = MathQuill.getInterface(2);
+    </script>
+    <script src="index.js" charset="utf-8"></script>
+
+</head>
+
+<body>
+    <div id=grid-wrapper>
+        <div id=infobar>
+            MAML 2020 - Team round
+            <span id=timeleft>
+                3 min 30 sec left
+            </span>
+        </div>
+
+        <div id=chatbox>
+            <div class=chat-row>
+                <span class=chat-person>James</span>:<span class=chat-text> I'll do Problem 1</span>
+            </div>
+            <div class=chat-row>
+                <span class=chat-person>John</span>:<span class=chat-text> I'll do 2</span>
+            </div>
+            <div class=chat-row>
+                <span class=chat-person>Jack</span>:<span class=chat-text> OK</span>
+            </div>
+            <div id=chat-input-row>
+                <div id=chat-input-wrapper>
+                    <input id=chat-input></input>
+                </div>
+            </div>
+        </div>
+        <div id=problembox>
+            <div id=problem-wrapper>
+                <img src="temp-content/problem-image.png" id=problem alt="">
+            </div>
+        </div>
+
+        <div id=answerbox>
+            <h3>Answers</h3>
+            <div id=answer-answers>
+            </div>
+            <div id=answer-help>
+Answer Input guide:
+ / : Enter A Fraction
+ \sqrt space : Square Root
+ \pi space : Pi
+ \pm space : Plus Minus
+ \e space : e
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
