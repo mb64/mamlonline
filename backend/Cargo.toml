@@ -6,4 +6,5 @@ edition = "2018"
 publish = false
 
 [dependencies]
-rocket = "0.4.4"
+rocket = {version = "0.4.4", features = ["tls"]}
+tiny_http = "0.6"

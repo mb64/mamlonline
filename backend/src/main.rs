@@ -8,6 +8,9 @@ use rocket::response::NamedFile;
 use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::thread;
+
+mod http_to_https;
 
 static WWW_DIR: &'static str = "../www";
 
@@ -22,6 +25,13 @@ fn index() -> io::Result<NamedFile> {
 }
 
 fn main() {
+    thread::spawn(|| {
+        http_to_https::Config::new()
+            .set_http_port(8080)
+            .set_https_port(4443)
+            .serve();
+    });
+
     rocket::ignite()
         .mount("/", routes![static_files, index])
         .launch();
