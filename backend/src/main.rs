@@ -18,7 +18,7 @@ use std::thread;
 mod http_to_https;
 mod session_manager;
 
-use session_manager::{Id, Sessions};
+use session_manager::{AdminId, Id, ParticipantId, Sessions};
 
 static WWW_DIR: &'static str = "www";
 
@@ -51,16 +51,13 @@ fn login(
         grade,
     } = login_data.into_inner();
     let id = sessions.new_participant(name, school, grade);
-    cookies.add(Cookie::new("id", id.to_string()));
+    cookies.add(Cookie::new("id", Id::Participant(id).to_string()));
     Ok(Redirect::to("/welcome"))
 }
 
 #[get("/welcome")]
-fn welcome(id: Id, sessions: State<Sessions>) -> Option<Template> {
-    let participant = match sessions.get_person_discrim(id) {
-        Ok(participant) => participant.clone(),
-        Err(_admin) => return None,
-    };
+fn welcome(id: ParticipantId, sessions: State<Sessions>) -> Option<Template> {
+    let participant = sessions.get_participant(id).clone();
     Some(Template::render("welcome", participant))
 }
 

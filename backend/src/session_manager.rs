@@ -2,7 +2,7 @@
 //!
 //! Currently just a hashmap of stuff
 
-use parking_lot::{MappedRwLockReadGuard, RwLock, RwLockReadGuard};
+use parking_lot::{RwLock, RwLockReadGuard};
 use rocket::http::{Cookie, Status};
 use rocket::request::{self, FromRequest};
 use rocket::{Request, State};
@@ -13,24 +13,46 @@ use std::ops::Deref;
 use std::str::FromStr;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct Id(pub u128);
+pub enum Id {
+    Participant(ParticipantId),
+    Admin(AdminId),
+}
 
-impl Id {
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct ParticipantId(pub u128);
+impl ParticipantId {
+    fn new_random() -> Self {
+        Self(rand::random())
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct AdminId(pub u128);
+impl AdminId {
     fn new_random() -> Self {
         Self(rand::random())
     }
 }
 
 impl FromStr for Id {
-    type Err = <u128 as FromStr>::Err;
+    type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(s.parse::<u128>()?))
+        Ok(match s.bytes().nth(0) {
+            Some(b'p') | Some(b'P') => {
+                Self::Participant(ParticipantId(s[1..].parse().map_err(|_| ())?))
+            }
+            Some(b'a') | Some(b'A') => Self::Admin(AdminId(s[1..].parse().map_err(|_| ())?)),
+            _ => return Err(()),
+        })
     }
 }
 impl fmt::Display for Id {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        match self {
+            Self::Participant(pid) => write!(f, "P{}", pid.0),
+            Self::Admin(aid) => write!(f, "A{}", aid.0),
+        }
     }
 }
 
@@ -48,9 +70,8 @@ impl<'de> Deserialize<'de> for Id {
                 write!(f, "a valid ID")
             }
             fn visit_str<E: de::Error>(self, s: &str) -> Result<Id, E> {
-                Ok(Id(s.parse::<u128>().map_err(|_| {
-                    de::Error::invalid_value(de::Unexpected::Str(s), &self)
-                })?))
+                Ok(s.parse::<Id>()
+                    .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?)
             }
         }
         d.deserialize_str(IdVisitor)
@@ -58,7 +79,8 @@ impl<'de> Deserialize<'de> for Id {
 }
 
 pub struct Sessions {
-    people: RwLock<HashMap<Id, Person>>,
+    participants: RwLock<HashMap<ParticipantId, Participant>>,
+    admins: RwLock<HashMap<AdminId, Admin>>,
 }
 
 #[derive(Clone, Hash, Debug, Eq, PartialEq)]
@@ -67,82 +89,74 @@ pub enum Person {
     Admin(Admin),
 }
 
-#[derive(Serialize, Deserialize, Clone, Hash, Debug, PartialEq, Eq)]
+#[derive(Serialize, Clone, Hash, Debug, PartialEq, Eq)]
 pub struct Participant {
-    pub id: Id,
+    #[serde(skip)]
+    pub id: ParticipantId,
     pub name: String,
     pub school: String,
     pub grade: u8,
 }
 
-#[derive(Serialize, Deserialize, Clone, Hash, Debug, PartialEq, Eq)]
+#[derive(Serialize, Clone, Hash, Debug, PartialEq, Eq)]
 pub struct Admin {
-    pub id: Id,
+    #[serde(skip)]
+    pub id: AdminId,
     pub school: String,
 }
 
 impl Sessions {
     pub fn new() -> Self {
         Self {
-            people: RwLock::new(HashMap::new()),
+            participants: RwLock::new(HashMap::new()),
+            admins: RwLock::new(HashMap::new()),
         }
     }
 
-    pub fn has_person(&self, id: Id) -> bool {
-        self.people.read().get(&id).is_some()
+    fn has_person(&self, id: Id) -> bool {
+        match id {
+            Id::Participant(pid) => self.participants.read().get(&pid).is_some(),
+            Id::Admin(aid) => self.admins.read().get(&aid).is_some(),
+        }
     }
 
-    pub fn get_person<'a>(&'a self, id: Id) -> Option<impl Deref<Target = Person> + 'a> {
-        RwLockReadGuard::try_map(self.people.read(), |hm| hm.get(&id)).ok()
-    }
-
-    pub fn get_person_discrim<'a>(
+    // Unwrap OK because we never make any unmatched `Id`s available
+    pub fn get_participant<'a>(
         &'a self,
-        id: Id,
-    ) -> Result<impl Deref<Target = Participant> + 'a, impl Deref<Target = Admin> + 'a> {
-        let guard = RwLockReadGuard::try_map(self.people.read(), |hm| hm.get(&id)).unwrap();
-        MappedRwLockReadGuard::try_map(guard, |person| match person {
-            Person::Participant(p) => Some(p),
-            _ => None,
-        })
-        .map_err(|guard| {
-            MappedRwLockReadGuard::map(guard, |person| match person {
-                Person::Admin(a) => a,
-                _ => unreachable!(),
-            })
-        })
+        id: ParticipantId,
+    ) -> impl Deref<Target = Participant> + 'a {
+        RwLockReadGuard::map(self.participants.read(), |hm| hm.get(&id).unwrap())
+    }
+    pub fn get_admin<'a>(&'a self, id: AdminId) -> impl Deref<Target = Admin> + 'a {
+        RwLockReadGuard::map(self.admins.read(), |hm| hm.get(&id).unwrap())
     }
 
-    pub fn new_participant(&self, name: String, school: String, grade: u8) -> Id {
-        let id = Id::new_random(); // Assume/hope it's unique
+    pub fn new_participant(&self, name: String, school: String, grade: u8) -> ParticipantId {
+        let id = ParticipantId::new_random(); // Assume/hope it's unique
         assert!(self
-            .people
+            .participants
             .write()
             .insert(
                 id,
-                Person::Participant(Participant {
+                Participant {
                     id,
                     name,
                     school,
                     grade,
-                }),
+                },
             )
             .is_none());
         id
     }
 
-    pub fn new_admin(&self, school: String) -> Id {
-        let id = Id::new_random(); // Assume/hope it's unique
+    pub fn new_admin(&self, school: String) -> AdminId {
+        let id = AdminId::new_random(); // Assume/hope it's unique
         assert!(self
-            .people
+            .admins
             .write()
-            .insert(id, Person::Admin(Admin { id, school }))
+            .insert(id, Admin { id, school })
             .is_none());
         id
-    }
-
-    pub fn remove(&self, id: Id) -> Option<Person> {
-        self.people.write().remove(&id)
     }
 }
 
@@ -170,6 +184,27 @@ impl<'a, 'r> FromRequest<'a, 'r> for Id {
             }
         } else {
             rocket::Outcome::Failure((Status::Unauthorized, ()))
+        }
+    }
+}
+
+impl<'a, 'r> FromRequest<'a, 'r> for ParticipantId {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
+        match request.guard::<Id>()? {
+            Id::Participant(pid) => rocket::Outcome::Success(pid),
+            _ => rocket::Outcome::Failure((Status::Unauthorized, ())),
+        }
+    }
+}
+impl<'a, 'r> FromRequest<'a, 'r> for AdminId {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
+        match request.guard::<Id>()? {
+            Id::Admin(aid) => rocket::Outcome::Success(aid),
+            _ => rocket::Outcome::Failure((Status::Unauthorized, ())),
         }
     }
 }
