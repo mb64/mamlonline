@@ -8,6 +8,7 @@ extern crate serde_derive;
 use rocket::http::{Cookie, Cookies};
 use rocket::request::Form;
 use rocket::response::{Debug, NamedFile, Redirect};
+use rocket::State;
 use rocket_contrib::templates::Template;
 
 use std::io;
@@ -15,6 +16,9 @@ use std::path::{Path, PathBuf};
 use std::thread;
 
 mod http_to_https;
+mod session_manager;
+
+use session_manager::{Id, Sessions};
 
 static WWW_DIR: &'static str = "www";
 
@@ -28,36 +32,39 @@ fn index() -> io::Result<NamedFile> {
     NamedFile::open(Path::new(WWW_DIR).join("index.html"))
 }
 
-#[derive(rocket::request::FromForm, Serialize, Deserialize)]
+#[derive(rocket::request::FromForm)]
 struct LoginData {
-    school: String,
     name: String,
+    school: String,
     grade: u8,
 }
 
 #[post("/login", data = "<login_data>")]
 fn login(
     mut cookies: Cookies,
+    sessions: State<Sessions>,
     login_data: Form<LoginData>,
 ) -> Result<Redirect, Debug<serde_json::Error>> {
-    cookies.add(Cookie::new(
-        "login",
-        serde_json::to_string(&login_data.into_inner())?,
-    ));
+    let LoginData {
+        name,
+        school,
+        grade,
+    } = login_data.into_inner();
+    let id = sessions.new_participant(name, school, grade);
+    cookies.add(Cookie::new("id", id.to_string()));
     Ok(Redirect::to("/welcome"))
 }
 
 #[get("/welcome")]
-fn welcome(cookies: Cookies) -> Option<Result<Template, Debug<serde_json::Error>>> {
-    Some(
-        serde_json::from_str(&cookies.get("login")?.value())
-            .map_err(|e| e.into())
-            .map(|login_data: LoginData| Template::render("welcome", login_data)),
-    )
+fn welcome(id: Id, sessions: State<Sessions>) -> Option<Template> {
+    let participant = match sessions.get_person_discrim(id) {
+        Ok(participant) => participant.clone(),
+        Err(_admin) => return None,
+    };
+    Some(Template::render("welcome", participant))
 }
 
-#[get("/clear_cookies?<uri>")]
-fn clear_cookies(mut cookies: Cookies, uri: String) -> Redirect {
+fn clear_cookies(cookies: &mut Cookies) {
     let to_remove = cookies
         .iter()
         .map(|cook| Cookie::named(cook.name().to_string()))
@@ -65,12 +72,18 @@ fn clear_cookies(mut cookies: Cookies, uri: String) -> Redirect {
     for cook in to_remove {
         cookies.remove(cook);
     }
+}
+
+#[get("/clear_cookies?<uri>")]
+fn clear_cookies_page(mut cookies: Cookies, uri: String) -> Redirect {
+    clear_cookies(&mut cookies);
     Redirect::to(uri)
 }
 
 #[get("/clear_cookies")]
-fn clear_cookies_noredir() -> Redirect {
-    Redirect::to("/clear_cookies?uri=/")
+fn clear_cookies_page_noredir(mut cookies: Cookies) -> Redirect {
+    clear_cookies(&mut cookies);
+    Redirect::to("/")
 }
 
 fn main() {
@@ -90,9 +103,10 @@ fn main() {
                 index,
                 login,
                 welcome,
-                clear_cookies_noredir,
-                clear_cookies
+                clear_cookies_page_noredir,
+                clear_cookies_page
             ],
         )
+        .manage(Sessions::new())
         .launch();
 }
