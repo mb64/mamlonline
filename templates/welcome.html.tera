@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Welcome, {{name}}</title>
+    </head>
+    <body>
+        <h2>Welcome, {{name}}</h2>
+        <p>You are a {{grade}}th grader from {{school}}</p>
+    </body>
+</html>
