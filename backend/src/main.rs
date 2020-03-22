@@ -26,10 +26,28 @@ static WWW_DIR: &'static str = "www";
 fn static_files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new(WWW_DIR).join(file)).ok()
 }
-
 #[get("/")]
 fn index() -> io::Result<NamedFile> {
     NamedFile::open(Path::new(WWW_DIR).join("index.html"))
+}
+
+fn already_logged_in_template(id: Id, sessions: State<Sessions>) -> Template {
+    match id {
+        Id::Participant(pid) => {
+            Template::render("already_logged_in", sessions.get_participant(pid).clone())
+        }
+        Id::Admin(aid) => {
+            Template::render("already_logged_in_admin", sessions.get_admin(aid).clone())
+        }
+    }
+}
+#[post("/login")]
+fn already_logged_in(id: Id, sessions: State<Sessions>) -> Template {
+    already_logged_in_template(id, sessions)
+}
+#[post("/admin_login")]
+fn already_logged_in_admin(id: Id, sessions: State<Sessions>) -> Template {
+    already_logged_in_template(id, sessions)
 }
 
 #[derive(rocket::request::FromForm)]
@@ -39,12 +57,8 @@ struct LoginData {
     grade: u8,
 }
 
-#[post("/login", data = "<login_data>")]
-fn login(
-    mut cookies: Cookies,
-    sessions: State<Sessions>,
-    login_data: Form<LoginData>,
-) -> Result<Redirect, Debug<serde_json::Error>> {
+#[post("/login", data = "<login_data>", rank = 2)]
+fn login(mut cookies: Cookies, sessions: State<Sessions>, login_data: Form<LoginData>) -> Redirect {
     let LoginData {
         name,
         school,
@@ -52,13 +66,44 @@ fn login(
     } = login_data.into_inner();
     let id = sessions.new_participant(name, school, grade);
     cookies.add(Cookie::new("id", Id::Participant(id).to_string()));
-    Ok(Redirect::to("/welcome"))
+    Redirect::to("/welcome")
+}
+
+#[derive(rocket::request::FromForm)]
+struct AdminLoginData {
+    school: String,
+}
+
+#[post("/admin_login", data = "<login_data>", rank = 2)]
+fn admin_login(
+    mut cookies: Cookies,
+    sessions: State<Sessions>,
+    login_data: Form<AdminLoginData>,
+) -> Redirect {
+    let AdminLoginData { school } = login_data.into_inner();
+    let id = sessions.new_admin(school);
+    cookies.add(Cookie::new("id", Id::Admin(id).to_string()));
+    Redirect::to("/welcome")
+}
+
+#[get("/logout")]
+fn logout(_id: Id, mut cookies: Cookies) -> Redirect {
+    cookies.remove(Cookie::named("id"));
+    Redirect::to("/")
 }
 
 #[get("/welcome")]
-fn welcome(id: ParticipantId, sessions: State<Sessions>) -> Option<Template> {
-    let participant = sessions.get_participant(id).clone();
-    Some(Template::render("welcome", participant))
+fn welcome(id: Id, sessions: State<Sessions>) -> Template {
+    match id {
+        Id::Participant(pid) => {
+            let participant = sessions.get_participant(pid).clone();
+            Template::render("welcome", participant)
+        }
+        Id::Admin(aid) => {
+            let admin = sessions.get_admin(aid).clone();
+            Template::render("welcome_admin", admin)
+        }
+    }
 }
 
 fn clear_cookies(cookies: &mut Cookies) {
@@ -99,7 +144,11 @@ fn main() {
                 static_files,
                 index,
                 login,
+                admin_login,
+                already_logged_in,
+                already_logged_in_admin,
                 welcome,
+                logout,
                 clear_cookies_page_noredir,
                 clear_cookies_page
             ],

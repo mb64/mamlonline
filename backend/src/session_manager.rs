@@ -3,7 +3,7 @@
 //! Currently just a hashmap of stuff
 
 use parking_lot::{RwLock, RwLockReadGuard};
-use rocket::http::{Cookie, Status};
+use rocket::http::Cookie;
 use rocket::request::{self, FromRequest};
 use rocket::{Request, State};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -179,11 +179,11 @@ impl<'a, 'r> FromRequest<'a, 'r> for Id {
                 None => {
                     // Bad cookie, kill it
                     cookies.remove(Cookie::named("id"));
-                    rocket::Outcome::Failure((Status::Unauthorized, ()))
+                    rocket::Outcome::Forward(())
                 }
             }
         } else {
-            rocket::Outcome::Failure((Status::Unauthorized, ()))
+            rocket::Outcome::Forward(())
         }
     }
 }
@@ -194,7 +194,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for ParticipantId {
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
         match request.guard::<Id>()? {
             Id::Participant(pid) => rocket::Outcome::Success(pid),
-            _ => rocket::Outcome::Failure((Status::Unauthorized, ())),
+            _ => rocket::Outcome::Forward(()),
         }
     }
 }
@@ -204,7 +204,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for AdminId {
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
         match request.guard::<Id>()? {
             Id::Admin(aid) => rocket::Outcome::Success(aid),
-            _ => rocket::Outcome::Failure((Status::Unauthorized, ())),
+            _ => rocket::Outcome::Forward(()),
         }
     }
 }
