@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <title>Host panel</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/host.css">
+    <link rel="stylesheet" href="mathquill-0.10.1/mathquill.css">
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+    <script src="mathquill-0.10.1/mathquill.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <script>
+        var MQ = MathQuill.getInterface(2);
+    </script>
+    <script src="js/host.js" charset="utf-8"></script>
+
+</head>
+
+<body>
+    <div id=grid-wrapper>
+        <div id=infobar>
+            Admin Panel
+        </div>
+
+        <div id=answerchatbox>
+            <a href="#" id=choose-answer class=chosen>
+                Answer Review
+            </a>
+            <a href="#" id=choose-chat>
+                Chat Log
+            </a>
+            <div id=answerbox>
+                <div class=answer-submit-row>
+                    <div class=answer-submit-info><strong>Newton South High School</strong> submitted questions <strong>2 and 3</strong> in <strong>Team Round</strong></div>
+                    <br>
+                    <div class=answer-submit-answers>
+                        <div>Q</div>
+                        <div>Submitted</div>
+                        <div>Correct</div>
+                        <div></div>
+
+                        <div>2</div>
+                        <div>69</div>
+                        <div>420</div>
+                        <div><input type="checkbox"></div>
+
+                        <div>3</div>
+                        <div>12</div>
+                        <div>12</div>
+                        <div><input type="checkbox"></div>
+                    </div>
+                    <br>
+                    <button>Done</button>
+                </div>
+                <div class=answer-submit-row>
+                    <div class=answer-submit-info><strong>Newton East High School</strong> submitted questions <strong>1, 2 and 4</strong> in <strong>Team Round</strong></div>
+                    <br>
+                    <div class=answer-submit-answers>
+                        <div>Q</div>
+                        <div>Submitted</div>
+                        <div>Correct</div>
+                        <div></div>
+
+                        <div>1</div>
+                        <div>1/2</div>
+                        <div>.4999999</div>
+                        <div><input type="checkbox"></div>
+
+                        <div>2</div>
+                        <div>9</div>
+                        <div>62</div>
+                        <div><input type="checkbox"></div>
+
+                        <div>4</div>
+                        <div>12</div>
+                        <div>12</div>
+                        <div><input type="checkbox"></div>
+                    </div>
+                    <br>
+                    <button>Done</button>
+                </div>
+            </div>
+            <div id=chatbox>
+                <div class=chat-row>
+                    <div class=chat-row-school>Newton South High School</div>
+
+                    <span class=chat-person>James</span>:<span class=chat-text> I'll do Problem 1</span>
+                </div>
+                <div class=chat-row>
+                    <div class=chat-row-school>Newton South High School</div>
+
+                    <span class=chat-person>John</span>:<span class=chat-text> I'll do 2</span>
+                </div>
+                <div class=chat-row>
+                    <div class=chat-row-school>Newton South High School</div>
+
+                    <span class=chat-person>Jack</span>:<span class=chat-text> OK</span>
+                </div>
+                <div class="chat-row chat-row-important">
+                    <div class=chat-row-school>Newton South High School</div>
+                    <strong> Jack has submitted answers for problems 2 and 3! Pending review.</strong>
+                </div>
+                <div id=chat-input-row>
+                    <div id=chat-input-wrapper>
+                        <label for="chat-input-name">From </label>
+                        <input id=chat-input-name></input>
+                        <span style="display: inline-block;width:.5em"> </span>
+                        <label for="chat-input-school-select">To</label>
+                        <select id=chat-input-school-select name="school">
+                            <option value="" disabled selected>School</option>
+                            <option value="NSHS">Newton South High School</option>
+                            <option value="NNHS">Newton North High School</option>
+                            <option value="NEHS">Newton East High School</option>
+                            <option value="NWHS">Newton West High School</option>
+                        </select>
+                        <input id=chat-input></input>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id=statusbox>
+            <div><strong>Round: </strong> Team Round</div>
+            <div><strong>Time Left: </strong> 3:32</div>
+
+            <button id=roundpausebutton> Pause </button>
+            <button id=previousroundbutton> Previous Round </button>
+            <button id=nextroundbutton> Next Round </button><br>
+
+            <input type="number" id=settimeleft-minute></input>:<input type="number" id=settimeleft-second></input>
+            <button id=settimeleftbutton> Set time left </button>
+        </div>
+
+        <div id=problembox>
+            <div><span class=equal-width-round-marker>Round 1 pdf</span> <button>View</button>  <button>Change</button></div>
+            <div><span class=equal-width-round-marker>Round 2 pdf</span> <button>View</button>  <button>Change</button></div>
+            <div><span class=equal-width-round-marker>Round 3 pdf</span> <button>View</button>  <button>Change</button></div>
+            <div><span class=equal-width-round-marker>Round 4 pdf</span> <button>View</button>  <button>Change</button></div>
+            <div><span class=equal-width-round-marker>Round 5 pdf</span> <button>View</button>  <button>Change</button></div>
+            <div><span class=equal-width-round-marker>Team pdf</span> <button>View</button>  <button>Change</button></div>
+        </div>
+        <div id=scorebox>
+            <div id=teamboxes>
+                <div class=teambox>
+                    <div><strong>Newton South High School</strong></div>
+                    <strong>Points:</strong> 2
+                    <ul>
+                      <li>Larry Qiu<button>x</button></li>
+                      <li>John<button>x</button></li>
+                      <li>James<button>x</button></li>
+                      <li>Jack<button>x</button></li>
+                    </ul>
+                </div>
+                <div class=teambox>
+                    <div><strong>Newton North High School</strong></div>
+                    <strong>Points:</strong> 6
+                    <ul>
+                      <li>Mark<button>x</button></li>
+                      <li>Barbone<button>x</button></li>
+                      <li>Alex<button>x</button></li>
+                      <li>Ethan<button>x</button></li>
+                    </ul>
+                </div>
+                <div class=teambox>
+                    <div><strong>Newton East High School</strong></div>
+                    <strong>Points:</strong> 20
+                    <ul>
+                      <li>Bruh<button>x</button></li>
+                      <li>hello<button>x</button></li>
+                      <li>ur mom<button>x</button></li>
+                      <li>poo<button>x</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

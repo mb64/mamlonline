@@ -3,24 +3,34 @@
 
 <head>
     <meta charset="utf-8">
-    <title>MAML Online</title>
-    <link rel="stylesheet" href="normalize.css">
-    <link rel="stylesheet" href="index.css">
-    <script src="jquery.js" charset="utf-8"></script>
+    <title>MAML 2020</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/incompetition.css">
     <link rel="stylesheet" href="mathquill-0.10.1/mathquill.css">
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
     <script src="mathquill-0.10.1/mathquill.js"></script>
 
     <script>
     var MQ = MathQuill.getInterface(2);
     </script>
-    <script src="index.js" charset="utf-8"></script>
+    <script src="js/incompetition.js" charset="utf-8"></script>
 
 </head>
 
 <body>
+    <div id="answer-input-guide" title="Answer Input guide">
+         <span class=answer-guide-key>/ </span>: Enter A Fraction<br>
+         <span class=answer-guide-key>\sqrt space </span>: Square Root<br>
+         <span class=answer-guide-key>\pi space </span>: Pi<br>
+         <span class=answer-guide-key>\pm space </span>: Plus Minus<br>
+         <span class=answer-guide-key>\e space </span>: e<br>
+    </div>
     <div id=grid-wrapper>
         <div id=infobar>
-            MAML 2020 - Team round
+            Newton South High school - James Freed - Team round
             <span id=timeleft>
                 3 min 30 sec left
             </span>
@@ -35,6 +45,9 @@
             </div>
             <div class=chat-row>
                 <span class=chat-person>Jack</span>:<span class=chat-text> OK</span>
+            </div>
+            <div class="chat-row chat-row-important">
+                <strong> Jack has submitted answers for problems 2 and 3! Pending review.</strong>
             </div>
             <div id=chat-input-row>
                 <div id=chat-input-wrapper>
@@ -52,14 +65,8 @@
             <h3>Answers</h3>
             <div id=answer-answers>
             </div>
-            <div id=answer-help>
-Answer Input guide:
- / : Enter A Fraction
- \sqrt space : Square Root
- \pi space : Pi
- \pm space : Plus Minus
- \e space : e
-            </div>
+            <button id=answer-submit-button>Submit answers</button><br>
+            <a href="#" id=answer-input-guide-button>Answer input guide</a>
         </div>
     </div>
 

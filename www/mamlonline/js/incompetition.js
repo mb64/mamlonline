@@ -6,13 +6,13 @@ $(() => {
 
         let answerNumberSpan = $("<span></span>")
         answerNumberSpan.addClass("answer-number")
-
         answerNumberSpan.text((probnum + 1) + ": ")
         answerDiv.append(answerNumberSpan);
 
         let answerbox = $("<span></span>");
-        answerDiv.append(answerbox);
         answerbox.addClass("answer")
+        answerDiv.append(answerbox);
+
         let mathField = MQ.MathField(answerbox.get(0), {
             spaceBehavesLikeTab: true,
             handlers: {
@@ -25,8 +25,17 @@ $(() => {
         answerarea.append(answerDiv);
 
     }
-    $(".answer").each((item, s) => {
-        console.log(s);
+
+
+    $("#answer-input-guide").dialog({
+        autoOpen: false
     });
 
+    $("#answer-input-guide-button").on("click", function() {
+        $("#answer-input-guide").dialog("open");
+    });
+
+    $("#answer-input-guide").dialog({
+        autoOpen: false
+    });
 })
